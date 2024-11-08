@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat and Upload PDF</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; }
+        #chatbox { height: 300px; overflow-y: scroll; background-color: #f7f7f7; padding: 10px; border-radius: 5px; }
+        .user-message { color: blue; }
+        .ai-message { color: green; }
+        .file-upload-form { margin-top: 20px; }
+        .loading-spinner { text-align: center; margin-top: 10px; display: none; } /* Initially hidden */
+
+        /* Additional styling for rich text in AI messages */
+        .ai-message strong { font-weight: bold; }
+        .ai-message em { font-style: italic; }
+        .ai-message ol {
+            padding-left: 20px;
+            margin-top: 5px;
+        }
+        .ai-message ol li {
+            margin-bottom: 5px;
+            text-indent: -5px;
+            padding-left: 5px;
+        }
+        .ai-message ul {
+            padding-left: 20px;
+        }
+        .ai-message li { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center text-primary mb-4">Chat with AI and Upload PDF</h1>
+
+        <input type="text" id="user_name" class="form-control mb-2" placeholder="Enter your name">
+        
+        <div id="chatbox" class="mb-3"></div>
+        <input type="text" id="user_input" class="form-control mb-2" placeholder="Type your message..."
+               onkeydown="if(event.key === 'Enter') { sendMessage(); event.preventDefault(); }">
+        <button onclick="sendMessage()" class="btn btn-primary btn-block">Send</button>
+
+        <!-- Chat Loading Spinner -->
+        <div id="loading-spinner" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <p>Waiting for response...</p>
+        </div>
+
+        <!-- File Upload Form -->
+        <form method="post" enctype="multipart/form-data" class="file-upload-form" onsubmit="uploadFile(event)">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-info btn-block">Upload PDF</button>
+        </form>
+
+        <!-- File Upload Loading Spinner -->
+        <div id="upload-loading-spinner" class="loading-spinner">
+            <div class="spinner-border text-info" role="status">
+                <span class="sr-only">Uploading...</span>
+            </div>
+            <p>Uploading file...</p>
+        </div>
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js"></script>
+
+    <script>
+        function uploadFile(event) {
+            event.preventDefault();
+            var form = document.querySelector('.file-upload-form');
+            var formData = new FormData(form);
+            var userName = document.getElementById("user_name").value;
+            var uploadSpinner = document.getElementById("upload-loading-spinner");
+
+            // Append username to formData
+            formData.append('user_name', userName);
+
+            // Show the upload spinner
+            uploadSpinner.style.display = 'block';
+
+            fetch('/ai/upload_file/', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        $('#successModal').modal('show');  // Show modal if upload successful
+                    }
+                    uploadSpinner.style.display = 'none';  // Hide the upload spinner
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    uploadSpinner.style.display = 'none';  // Hide the upload spinner on error
+                });
+        }
+
+        function sendMessage() {
+            var input = document.getElementById("user_input").value;
+            var userName = document.getElementById("user_name").value;
+            var chatBox = document.getElementById("chatbox");
+            var loadingSpinner = document.getElementById("loading-spinner");
+
+            if (input.trim() !== "" && userName.trim() !== "") {
+                chatBox.innerHTML += "<div class='user-message'>" + userName + ": " + input + "</div>";
+                loadingSpinner.style.display = 'block';  // Show loading spinner
+
+                fetch('/ai/ai_response/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: input, user_name: userName })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const formattedMessage = formatText(data.response);
+                    const aiMessageDiv = document.createElement('div');
+                    aiMessageDiv.className = 'ai-message';
+                    aiMessageDiv.innerHTML = "AI: " + formattedMessage;
+                    chatBox.appendChild(aiMessageDiv);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    loadingSpinner.style.display = 'none';  // Hide loading spinner
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    loadingSpinner.style.display = 'none';  // Hide loading spinner on error
+                });
+
+                document.getElementById("user_input").value = "";
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } else {
+                alert("Please enter both your name and a message.");
+            }
+        }
+        
+        function formatText(text) {
+            text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+            text = text.replace(/(\d+\.\s.*?)(?=\d+\.|\n|$)/g, "<li>$1</li>");
+            text = text.replace(/(<li>.*?<\/li>)+/g, "<ol>$&</ol>");
+            text = text.replace(/(?:^|\n)-\s(.*?)(?=\n|$)/g, "<li>$1</li>");
+            text = text.replace(/(<li>.*?<\/li>)+/g, "<ul>$&</ul>");
+            text = text.replace(/<\/li>\s*<li>/g, "</li><li>");
+            text = text.replace(/\n(?!<\/?(ol|ul|li)>)/g, "<br>");
+            return text;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8001
+    volumes:
+      - .:/app
+      - ./models/:/app/models
+      - ./vector_db_store/:/app/vector_db_store
+    ports:
+      - "8001:8001"
+    environment:
+      PYTHONDONTWRITEBYTECODE: 1
+      PYTHONUNBUFFERED: 1
+    networks:
+      - my_shared_network
+    deploy:
+          resources:
+            reservations:
+              devices:
+                - driver: "nvidia"
+                  capabilities: ["gpu"]
+networks:
+  my_shared_network:
+    external: true

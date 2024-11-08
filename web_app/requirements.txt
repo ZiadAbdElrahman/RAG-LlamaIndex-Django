@@ -1,0 +1,12 @@
+Django>=3.0,<4.0
+djangorestframework
+requests
+python-dotenv
+fastapi
+uvicorn
+python-multipart
+python-dotenv
+transformers
+torch
+huggingface_hub
+accelerate>=0.26.0

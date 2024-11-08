@@ -1,0 +1,33 @@
+# Use an official Python runtime as a parent image
+FROM pytorch/pytorch:2.4.0-cuda12.1-cudnn9-runtime AS builder
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV USING_GPU 1
+
+# Set work directory
+WORKDIR /app
+
+RUN apt update
+RUN apt install -y gcc-11
+RUN apt install -y g++-11
+# RUN CXX=g++-11 CC=gcc-11 pip install llama-index-llms-llama-cpp
+RUN CXX=g++-11 CC=gcc-11 CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-index-llms-llama-cpp --upgrade --force-reinstall --no-cache-dir --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121
+# Install dependencies
+COPY requirements.txt /app/
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+
+# Copy project
+COPY . /app/ 
+RUN mkdir /app/models
+RUN mkdir /app/vector_db_store
+
+# # Download Needed models 
+# RUN python download_models.py
+
+# Run the application on port 8000
+# CMD ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["/bin/bash"]

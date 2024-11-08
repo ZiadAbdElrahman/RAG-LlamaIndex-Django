@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  web_app:
+    build:
+      context: ./web_app  # Path to your web app project directory
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./web_app:/app  # Mount the web app directory
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1  # Set to 0 in production
+    networks:
+      - my_shared_network
+
+  rag_engine_cpu:
+    profiles: ["cpu"]
+    build:
+      context: ./rag_engine  # Path to your RAG engine project directory
+      dockerfile: Dockerfile.cpu  # Dockerfile for CPU configuration
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8001
+    volumes:
+      - ./rag_engine:/app  # Mount the RAG engine directory
+      - ./rag_engine/models:/app/models  # Mount the models directory
+      - ./rag_engine/vector_db_store:/app/vector_db_store  # Mount the vector DB directory
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - DEVICE=cpu
+    networks:
+      my_shared_network:
+        aliases:
+          - rag_engine
+
+  rag_engine_gpu:
+    profiles: ["gpu"]
+    build:
+      context: ./rag_engine  # Path to your RAG engine project directory
+      dockerfile: Dockerfile.gpu  # Dockerfile for GPU configuration
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8001
+    volumes:
+      - ./rag_engine:/app  # Mount the RAG engine directory
+      - ./rag_engine/models:/app/models  # Mount the models directory
+      - ./rag_engine/vector_db_store:/app/vector_db_store  # Mount the vector DB directory
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - DEVICE=gpu
+    networks:
+      my_shared_network:
+        aliases:
+          - rag_engine
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: "nvidia"
+              capabilities: ["gpu"]
+
+networks:
+  my_shared_network:
+    external: true

@@ -1,0 +1,6 @@
+llm_model_id: 'none'
+vector_db_dir: "vector_db_store"
+vram: "high_vram"
+models_dir: "./models"
+use_vlm: False
+table_extraction: False

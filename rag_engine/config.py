@@ -23,6 +23,13 @@ vram2embed_model = {
     'high_vram':'BAAI/bge-reranker-large'
 }
 
+embed_model2dim = {
+    'BAAI/bge-base-en-v1.5':768,
+    'BAAI/bge-large-en-v1.5':1024,
+    'BAAI/bge-reranker-large':1024
+}
+
+
 class AppConfig(metaclass=Singleton):  # pylint: disable=too-many-instance-attributes
     def __init__(self, config_file):
         self.cfg = self._load_config_file(config_file)
@@ -47,6 +54,7 @@ class AppConfig(metaclass=Singleton):  # pylint: disable=too-many-instance-attri
                 self.llm_model_id = 'llama-3.2-8b'
                 
         self.embed_model = vram2embed_model[self.vram]
+        self.embed_model_dim = embed_model2dim[self.embed_model]
         self.device = 'cpu' if self.vram == 'no_vram' else 'cuda'
         
     @staticmethod

@@ -24,7 +24,11 @@ model_id2model_name = {
     'llama-3.2-3b':'Llama-3.2-3B-Instruct-Q4_K_M.gguf',
     'llama-3.2-8b':'meta-llama/Meta-Llama-3-8B-Instruct'
 }
-
+embed_model2name = {
+    'BAAI/bge-base-en-v1.5':'bge-base',
+    'BAAI/bge-large-en-v1.5':'bge-large',
+    'BAAI/bge-reranker-large':'bge-reranker'
+}
 
 
 
@@ -39,7 +43,7 @@ class RAG:
         logger.info('LLM model is Loaded')
         
         Settings.embed_model = HuggingFaceEmbedding(model_name=config.embed_model, cache_folder=config.models_dir)
-        logger.info('Embedding model is Loaded')
+        logger.info(f'{config.embed_model} Embedding model is Loaded')
 
         Settings.text_splitter = SentenceSplitter(chunk_size=1500)
         self.active_chatbots = {}
@@ -48,9 +52,12 @@ class RAG:
     def add_pdf_file(self, user_id, pdf_dir):
         documents = get_pdf_documents(pdf_dir)
         # documents = get_pdf_documents_with_context(pdf_dir, self.llm._model)
+        
+        os.makedirs(os.path.join(config.vector_db_dir, embed_model2name[config.embed_model]), exist_ok=True)
+
         vector_store = MilvusVectorStore(
-            uri = os.path.join(config.vector_db_dir, user_id+'.dp'),
-            dim = 768
+            uri = os.path.join(config.vector_db_dir, embed_model2name[config.embed_model], user_id+'.dp'),
+            dim = config.embed_model_dim
             )
         storage_context = StorageContext.from_defaults(vector_store=vector_store)
         VectorStoreIndex.from_documents(documents, storage_context=storage_context)
@@ -58,8 +65,8 @@ class RAG:
         
     def start_chat(self, user_id):
         vector_store = MilvusVectorStore(
-            uri = os.path.join(config.vector_db_dir, user_id+'.dp'),
-            dim = 768
+            uri = os.path.join(config.vector_db_dir, embed_model2name[config.embed_model], user_id+'.dp'),
+            dim = config.embed_model_dim
             )
         storage_context = StorageContext.from_defaults(vector_store=vector_store)
         index = VectorStoreIndex.from_vector_store(vector_store, storage_context=storage_context)
@@ -104,7 +111,7 @@ class RAG:
                 # generate_kwargs={"pad_token_id": tokenizer.eos_token_id},
                 tokenizer_kwargs={"padding_side": "left", "cache_dir":config.models_dir},
                 context_window=32768,
-                max_new_tokens=2048,
+                max_new_tokens=1024,
             )
         return llm
 

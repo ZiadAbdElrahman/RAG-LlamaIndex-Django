@@ -1,9 +1,9 @@
 # custom
-*/rag_engine/models/*
-*/rag_engine/uploaded_files/*
-*/rag_engine/vector_db_store/*
-*/rag_engine/vectorstore/*
-*/web_app/data/*
+rag_engine/models/*
+rag_engine/uploaded_files/*
+rag_engine/vector_db_store/*
+rag_engine/vectorstore/*
+web_app/data/pdf/*
 
 
 .idea

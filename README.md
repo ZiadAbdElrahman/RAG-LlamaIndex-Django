@@ -26,6 +26,7 @@ Follow these steps to set up and run the project:
 
     ```bash
     git clone <repository-url>
+    cd <repository-directory>
     ```
 
 2. **Create a Docker Network**
@@ -93,9 +94,6 @@ Upload PDF files through the web interface and start chatting. The system will r
 
 Contributions to this project are welcome. Please fork the repository and submit a pull request with your features or fixes.
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
 
 ## Contact
 

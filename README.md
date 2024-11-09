@@ -26,7 +26,6 @@ Follow these steps to set up and run the project:
 
     ```bash
     git clone <repository-url>
-    cd <repository-directory>
     ```
 
 2. **Create a Docker Network**
@@ -55,7 +54,20 @@ Follow these steps to set up and run the project:
     vram: "choose from [no_vram, low_vram, high_vram]"
     ```
 
-5. **Download Necessary Models**
+5. **Request Access to Llama-3.2 Model**
+
+    You need to request access to the Llama-3.2 model for this application to function. Request access at [Llama-3.2-3B-Instruct](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct).
+
+6. **Create .env File for API Token**
+
+    Create a `.env` file under the `rag_engine/` folder and add your Hugging Face account token:
+
+    ```plaintext
+    # rag_engine/.env
+    HUGGING_FACE_HUB_TOKEN=<your_hugging_face_account_token>
+    ```
+
+7. **Download Necessary Models**
 
     Download the models required for the RAG engine:
 
@@ -64,7 +76,7 @@ Follow these steps to set up and run the project:
     sh download_models.sh
     ```
 
-6. **Launch the Application**
+8. **Launch the Application**
 
     Based on your hardware, start the application using Docker Compose:
 
